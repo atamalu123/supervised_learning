@@ -166,3 +166,7 @@ Our model is very good, with a high Balanced Accuracy value
 
 Sensitivity measures the ratio of actual positive cases that are
 correctly identified and our model has very high sensitivity
+
+Specificity represents the ability of the model to correctly identify
+negative cases. Our model is less good at correctly identifying negative
+cases
