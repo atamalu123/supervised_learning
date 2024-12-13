@@ -1,0 +1,108 @@
+---
+title: "K Nearest Neighbors"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Background
+
+The K Nearest Neighbors (KNN) algorithm predicts the labels of the test dataset by looking at the labels of its closest neighbors in the feature space of the training dataset. The following example will use it for a classification problem.
+
+## Dataset
+
+The dataset can be found [here](https://www.openintro.org/data/index.php?data=loans_full_schema). It consists of 10,000 loans, and we will find whether a loan will be paid back based on the customer’s data.
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+
+df <- read_csv('data/loans.csv', show_col_types = FALSE)
+df <- subset(df, select = -c(loan_purpose))
+head(df)
+```
+
+We will remove columns where there are a lot of missing (NA) or null values
+
+```{r}
+df %>%
+  summarize_all(function(x){ sum(is.na(x)) })
+
+### Remove NA columns
+df <- df %>%
+  select(-c(emp_title, emp_length, annual_income_joint, debt_to_income, verification_income_joint, debt_to_income_joint, months_since_last_delinq, months_since_90d_late, months_since_last_credit_inquiry, num_accounts_120d_past_due))
+
+### Create column to determine if fully paid or not
+df$fully_paid <- ifelse(df$loan_status == 'Fully Paid', 1, 0)
+
+### Remove non-numeric columns
+df <- df %>% select_if(is.numeric)
+
+### Change fully paid to a factor
+df$fully_paid <- as.factor(df$fully_paid)
+```
+
+## Training and Test data
+
+Now we split the data into test and training datasets
+
+```{r}
+suppressPackageStartupMessages(library(caret))
+set.seed(1000)
+
+trainIndex <- createDataPartition(df$fully_paid, 
+                                  times=1, 
+                                  p = .8, 
+                                  list = FALSE)
+train <- df[trainIndex, ]
+test <- df[-trainIndex, ]
+```
+
+## Feature scaling
+
+We will now scale both the training and testing sets
+
+```{r}
+preProcValues <- preProcess(train, method = c("center", "scale"))
+trainTransformed <- predict(preProcValues, train)
+testTransformed <- predict(preProcValues, test)
+```
+
+
+## Model 
+
+Now we can construct the model
+
+```{r}
+knnModel <- train(
+  fully_paid ~ ., 
+  data = trainTransformed, 
+	method = "knn", 
+	trControl = trainControl(method = "cv"), 
+	tuneGrid = data.frame(k = c(3,5,7))
+  )
+```
+
+And choose the best k value
+
+```{r}
+best_model<- knn3(fully_paid ~ .,
+                  data = trainTransformed,
+                  k = knnModel$bestTune$k)
+```
+
+## Model evaluation
+
+Now we can evaluate the model using metrics given by the `caret` package
+
+```{r}
+predictions <- predict(best_model, testTransformed, type = "class")
+# Calculate confusion matrix
+cm <- confusionMatrix(predictions, testTransformed$fully_paid)
+cm
+```
+
+Our model is very good, with a high Balanced Accuracy value
+
+Sensitivity measures the ratio of actual positive cases that are correctly identified and our model has very high sensitivity
