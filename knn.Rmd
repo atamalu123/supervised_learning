@@ -69,8 +69,7 @@ trainTransformed <- predict(preProcValues, train)
 testTransformed <- predict(preProcValues, test)
 ```
 
-
-## Model 
+## Model
 
 Now we can construct the model
 
@@ -100,7 +99,7 @@ Now we can evaluate the model using metrics given by the `caret` package
 predictions <- predict(best_model, testTransformed, type = "class")
 # Calculate confusion matrix
 cm <- confusionMatrix(predictions, testTransformed$fully_paid)
-cm
+print(cm)
 ```
 
 Our model is very good, with a high Balanced Accuracy value

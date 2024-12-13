@@ -131,7 +131,7 @@ Now we can evaluate the model using metrics given by the `caret` package
 predictions <- predict(best_model, testTransformed, type = "class")
 # Calculate confusion matrix
 cm <- confusionMatrix(predictions, testTransformed$fully_paid)
-cm
+print(cm)
 ```
 
     ## Confusion Matrix and Statistics
